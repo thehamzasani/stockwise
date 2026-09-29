@@ -11,7 +11,7 @@
 
 
 import { useState, useEffect, useCallback } from "react";
-import {  getSqlite } from "@/db";
+import { getSqlite } from "@/db";
 import { withTransaction } from "@/db/transaction";
 // import { purchases, purchaseItems, products, suppliers, payments, auditLog } from "@/db/schema";
 // import { eq, and, desc, like, gte, lte, sql, count } from "drizzle-orm";
@@ -29,6 +29,7 @@ interface UsePurchasesOptions {
   status?: string;
   dateFrom?: string;
   dateTo?: string;
+
 }
 
 interface UsePurchasesReturn {
@@ -37,6 +38,8 @@ interface UsePurchasesReturn {
   isLoading: boolean;
   error: string | null;
   refetch: () => void;
+  dateFrom?: string;
+  dateTo?: string;
 }
 
 export function usePurchases(options: UsePurchasesOptions = {}): UsePurchasesReturn {
@@ -59,7 +62,8 @@ export function usePurchases(options: UsePurchasesOptions = {}): UsePurchasesRet
 
         const conditions: string[] = ["p.is_cancelled = 0"];
         const params: unknown[] = [];
-
+        if (dateFrom) { conditions.push("p.purchase_date >= ?"); params.push(dateFrom); }
+        if (dateTo) { conditions.push("p.purchase_date <= ?"); params.push(dateTo); }
         if (search) {
           conditions.push("(p.invoice_no LIKE ? OR s.name LIKE ?)");
           params.push(`%${search}%`, `%${search}%`);
@@ -163,18 +167,18 @@ export function usePurchases(options: UsePurchasesOptions = {}): UsePurchasesRet
 
             const supplier = row.supplier_id
               ? {
-                  id: row.supplier_id,
-                  name: row.supplier_name ?? "",
-                  contactPerson: null,
-                  phone: row.supplier_phone,
-                  city: row.supplier_city,
-                  address: null,
-                  notes: null,
-                  outstandingBalance: 0,
-                  isActive: true,
-                  createdAt: "",
-                  updatedAt: "",
-                }
+                id: row.supplier_id,
+                name: row.supplier_name ?? "",
+                contactPerson: null,
+                phone: row.supplier_phone,
+                city: row.supplier_city,
+                address: null,
+                notes: null,
+                outstandingBalance: 0,
+                isActive: true,
+                createdAt: "",
+                updatedAt: "",
+              }
               : null;
 
             return {
@@ -211,7 +215,7 @@ export function usePurchases(options: UsePurchasesOptions = {}): UsePurchasesRet
     return () => { cancelled = true; };
   }, [page, search, supplierId, status, dateFrom, dateTo, tick]);
 
-  return { data, totalCount, isLoading, error, refetch };
+  return { data, totalCount, isLoading, error, refetch, dateFrom, dateTo };
 }
 
 // ─── usePurchase (single) ────────────────────────────────────────────────────
@@ -314,18 +318,18 @@ export function usePurchase(id: string | undefined): UsePurchaseReturn {
 
         const supplier = row.supplier_id
           ? {
-              id: row.supplier_id,
-              name: row.supplier_name ?? "",
-              contactPerson: row.supplier_contact,
-              phone: row.supplier_phone,
-              city: row.supplier_city,
-              address: row.supplier_address,
-              notes: null,
-              outstandingBalance: row.supplier_outstanding,
-              isActive: row.supplier_active === 1,
-              createdAt: "",
-              updatedAt: "",
-            }
+            id: row.supplier_id,
+            name: row.supplier_name ?? "",
+            contactPerson: row.supplier_contact,
+            phone: row.supplier_phone,
+            city: row.supplier_city,
+            address: row.supplier_address,
+            notes: null,
+            outstandingBalance: row.supplier_outstanding,
+            isActive: row.supplier_active === 1,
+            createdAt: "",
+            updatedAt: "",
+          }
           : null;
 
         if (!cancelled) {

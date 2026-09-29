@@ -11,7 +11,7 @@ import { WALKIN_CUSTOMER_ID } from "@/lib/constants";
 import { todayDate } from "@/lib/utils";
 import { toast } from "sonner";
 import type { Customer, Product } from "@/types";
-
+import { notifyLowStock } from "@/lib/notify";
 interface SaleFormProps {
   initialCustomerId?: string | null;
   onSuccess: (saleId: string) => void;
@@ -240,8 +240,11 @@ export function SaleForm({ initialCustomerId, onSuccess, onPrintReady, onCancel 
         notes: activeSale.notes,
         saleDate,
       });
+      const soldProductIds = activeSale.items.map((i) => i.product.id);
+
       toast.success("Sale created successfully.");
       resetSale();
+      void notifyLowStock(soldProductIds); // runs after commit, never inside the transaction
       onPrintReady(saleId);
       onSuccess(saleId);
     } catch (err) {

@@ -1,14 +1,15 @@
 // src/pages/purchases/PurchasesPage.tsx
-// import { useState, useCallback } from "react";
 import { useState } from "react";
 import { Plus, Eye, XCircle, DollarSign, ChevronLeft, ChevronRight, Undo2 } from "lucide-react";
 import { usePurchases, cancelPurchase, recordPurchasePayment } from "@/hooks/usePurchases";
 import { useNavigate } from "@/lib/navigation";
+import DateRangeFilter, { EMPTY_RANGE, type DateRange } from "@/components/shared/DateRangeFilter";
 import { formatCurrency, formatDate, formatRelativeTime } from "@/lib/utils";
 import { ITEMS_PER_PAGE } from "@/lib/constants";
 import type { PurchaseWithItems } from "@/types";
 import { toast } from "sonner";
 import { ReturnForm } from "@/components/shared/ReturnForm";
+
 type TabFilter = "all" | "unpaid" | "partial" | "paid";
 
 export default function PurchasesPage() {
@@ -17,6 +18,7 @@ export default function PurchasesPage() {
   const [tab, setTab] = useState<TabFilter>("all");
   const [page, setPage] = useState(1);
   const [search, setSearch] = useState("");
+  const [range, setRange] = useState<DateRange>(EMPTY_RANGE);
   const [cancelTarget, setCancelTarget] = useState<PurchaseWithItems | null>(null);
   const [cancelReason, setCancelReason] = useState("");
   const [cancelLoading, setCancelLoading] = useState(false);
@@ -27,10 +29,13 @@ export default function PurchasesPage() {
   const [returnTarget, setReturnTarget] = useState<{
     id: string; invoiceNo: string | null;
   } | null>(null);
+
   const { data, totalCount, isLoading, error, refetch } = usePurchases({
     page,
     search,
     status: tab === "all" ? undefined : tab,
+    dateFrom: range.from || undefined,
+    dateTo: range.to || undefined,
   });
 
   const totalPages = Math.max(1, Math.ceil(totalCount / ITEMS_PER_PAGE));
@@ -40,12 +45,17 @@ export default function PurchasesPage() {
     setPage(1);
   }
 
+  function handleRangeChange(r: DateRange) {
+    setRange(r);
+    setPage(1);
+  }
+
   async function handleCancel() {
     if (!cancelTarget) return;
     setCancelLoading(true);
     try {
       await cancelPurchase(cancelTarget.id, cancelReason);
-      toast.success("Purchase cancelled.");
+      toast.success("Purchase cancelled — stock decremented.");
       setCancelTarget(null);
       setCancelReason("");
       refetch();
@@ -104,6 +114,9 @@ export default function PurchasesPage() {
           New Purchase
         </button>
       </div>
+
+      {/* Date range filter */}
+      <DateRangeFilter value={range} onChange={handleRangeChange} />
 
       {/* Main card */}
       <div className="bg-white border border-[#e4e7ec] rounded-lg overflow-hidden">
@@ -304,7 +317,7 @@ export default function PurchasesPage() {
             <h3 className="text-base font-semibold text-[#111827] mb-2">Cancel Purchase?</h3>
             <p className="text-sm text-[#6b7280] mb-4">
               This will reverse all stock movements for this purchase.
-              <strong className="text-[#111827]"> Stock will be decremented.</strong>
+              <strong className="text-[#111827]"> Stock will be decremented.</strong>{" "}
               WAC will not change.
             </p>
             <p className="text-sm text-[#374151] mb-1">
@@ -406,6 +419,7 @@ export default function PurchasesPage() {
           </div>
         </div>
       )}
+
       {returnTarget && (
         <ReturnForm
           mode="purchase"

@@ -183,7 +183,7 @@ export default function Dashboard() {
       {/* Balance mismatch banner */}
       {mismatchCount > 0 && (
         <div className="flex items-center gap-3 rounded-lg border border-[#fde68a] bg-[#fefce8] px-4 py-3">
-          <AlertTriangle className="h-4 w-4 flex-shrink-0 text-[#d97706]" />
+          <AlertTriangle className="h-4 w-4 shrink-0 text-[#d97706]" />
           <p className="flex-1 text-sm text-[#92400e]">
             <span className="font-semibold">
               {mismatchCount} balance mismatch{mismatchCount !== 1 ? "es" : ""} detected

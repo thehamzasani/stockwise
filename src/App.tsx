@@ -28,7 +28,12 @@ import ReportsPage from "@/pages/reports/ReportsPage";
 import SettingsPage from "@/pages/settings/SettingsPage";
 import OpeningBalancesPage from "@/pages/OpeningBalancesPage";
 import AuditLogPage from "@/pages/AuditLogPage";
+import { useKeyboardShortcuts } from "@/hooks/useKeyboardShortcuts";
 
+function GlobalShortcuts() {
+  useKeyboardShortcuts();
+  return null;
+}
 // ── Page meta: title + subtitle shown in Topbar ───────────────────────────
 const PAGE_META: Record<AppPage, { title: string; subtitle?: string }> = {
   dashboard:           { title: "Dashboard",         subtitle: "Overview & KPIs" },
@@ -110,6 +115,7 @@ export default function App() {
 
   return (
     <NavigationContext.Provider value={{ currentPage, params, navigate }}>
+       <GlobalShortcuts />
       <AppLayout title={meta.title} subtitle={meta.subtitle}>
         {renderPage()}
       </AppLayout>

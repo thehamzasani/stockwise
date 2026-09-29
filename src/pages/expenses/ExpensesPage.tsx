@@ -280,7 +280,7 @@ function ExpensesPageInner() {
 
       {/* Filters */}
       <div className="flex flex-wrap items-center gap-3">
-        <div className="flex-1 min-w-[200px] max-w-xs">
+        <div className="flex-1 min-w-50 max-w-xs">
           <SearchInput
             value={search}
             onChange={handleSearchChange}

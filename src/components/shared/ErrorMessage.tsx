@@ -19,7 +19,7 @@ export function ErrorMessage({
         <AlertCircle className="h-5 w-5 text-[#dc2626]" />
       </div>
       <h3 className="text-sm font-semibold text-[#111827]">{title}</h3>
-      <p className="mt-1 break-words text-sm text-[#6b7280]">{message}</p>
+      <p className="mt-1 wrap-break-word text-sm text-[#6b7280]">{message}</p>
       {onRetry && (
         <Button
           onClick={onRetry}

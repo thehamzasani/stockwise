@@ -299,7 +299,7 @@ export default function InventoryPage() {
                           <td className="px-4 py-2.5 text-right text-sm font-medium text-[#111827]">
                             {m.stockAfter}
                           </td>
-                          <td className="px-4 py-2.5 text-xs text-[#6b7280] max-w-[180px] truncate">
+                          <td className="px-4 py-2.5 text-xs text-[#6b7280] max-w-45 truncate">
                             {m.notes ?? "—"}
                           </td>
                         </tr>

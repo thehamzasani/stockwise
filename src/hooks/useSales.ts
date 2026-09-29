@@ -3,11 +3,13 @@ import { useState, useEffect, useCallback } from "react";
 import { getDb, getSqlite } from "@/db";
 import { withTransaction } from "@/db/transaction";
 import { sales } from "@/db/schema";
-import { eq, desc, and, lt, ne, sql } from "drizzle-orm";
+import { eq, desc, asc, and, lt, ne, sql } from "drizzle-orm";
+import type { SQLiteColumn } from "drizzle-orm/sqlite-core";
 import { generateId, nowISO, todayDate, addDaysToDate, calcInvoiceNo } from "@/lib/utils";
 import { checkCreditLimit } from "@/lib/wac";
 import { WALKIN_CUSTOMER_ID, MOVEMENT_TYPES, AUDIT_EVENTS, ITEMS_PER_PAGE } from "@/lib/constants";
 import type { Sale, SaleWithItems, SaleLineItem, PaymentMethod } from "@/types";
+import type { SortConfig } from "@/lib/sort";
 
 // ─── LIST HOOK ────────────────────────────────────────────────────────────────
 
@@ -18,6 +20,7 @@ interface UseSalesOptions {
   customerId?: string;
   dateFrom?: string;
   dateTo?: string;
+  sort?: SortConfig | null;
 }
 
 interface UseSalesResult {
@@ -28,8 +31,21 @@ interface UseSalesResult {
   refetch: () => void;
 }
 
+// Whitelist: keys MUST match the column `key` values used in SalesPage.
+const SALE_SORTABLE: Record<string, SQLiteColumn> = {
+  invoiceNo: sales.invoiceNo,
+  saleDate: sales.saleDate,
+  dueDate: sales.dueDate,
+  totalAmount: sales.totalAmount,
+  paidAmount: sales.paidAmount,
+  paymentStatus: sales.paymentStatus,
+};
+
 export function useSales(options: UseSalesOptions = {}): UseSalesResult {
-  const { page = 1, search = "", status = "all", customerId, dateFrom, dateTo } = options;
+  const { page = 1, search = "", status = "all", customerId, dateFrom, dateTo, sort = null } = options;
+  const sortKey = sort?.key ?? null;
+  const sortDir = sort?.direction ?? null;
+
   const [data, setData] = useState<Sale[]>([]);
   const [totalCount, setTotalCount] = useState(0);
   const [isLoading, setIsLoading] = useState(true);
@@ -48,7 +64,6 @@ export function useSales(options: UseSalesOptions = {}): UseSalesResult {
         const offset = (page - 1) * ITEMS_PER_PAGE;
         const today = todayDate();
 
-        // Build conditions
         const conditions = [eq(sales.isCancelled, false)];
 
         if (customerId) conditions.push(eq(sales.customerId, customerId));
@@ -69,12 +84,17 @@ export function useSales(options: UseSalesOptions = {}): UseSalesResult {
 
         const whereClause = and(...conditions);
 
+        const sortCol = sortKey ? SALE_SORTABLE[sortKey] : undefined;
+        const orderExprs = sortCol
+          ? [sortDir === "desc" ? desc(sortCol) : asc(sortCol), desc(sales.createdAt)]
+          : [desc(sales.createdAt)];
+
         const [rows, countRows] = await Promise.all([
           db
             .select()
             .from(sales)
             .where(whereClause)
-            .orderBy(desc(sales.createdAt))
+            .orderBy(...orderExprs)
             .limit(ITEMS_PER_PAGE)
             .offset(offset),
           db
@@ -95,7 +115,7 @@ export function useSales(options: UseSalesOptions = {}): UseSalesResult {
     }
     void load();
     return () => { cancelled = true; };
-  }, [page, search, status, customerId, dateFrom, dateTo, tick]);
+  }, [page, search, status, customerId, dateFrom, dateTo, sortKey, sortDir, tick]);
 
   return { data, totalCount, isLoading, error, refetch };
 }

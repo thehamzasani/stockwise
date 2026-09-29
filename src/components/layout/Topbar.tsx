@@ -4,7 +4,7 @@ interface TopbarProps {
   subtitle?: string;
   actions?: React.ReactNode;
 }
-
+import GlobalSearch from "@/components/shared/GlobalSearch";
 export default function Topbar({ title, subtitle, actions }: TopbarProps) {
   return (
     <header
@@ -17,7 +17,7 @@ export default function Topbar({ title, subtitle, actions }: TopbarProps) {
           <p className="text-[11px] leading-tight text-[#6b7280]">{subtitle}</p>
         )}
       </div>
-
+        <GlobalSearch />
       {actions && (
         <div className="flex items-center gap-2">{actions}</div>
       )}

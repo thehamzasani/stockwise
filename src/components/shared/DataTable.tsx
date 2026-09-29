@@ -1,8 +1,9 @@
 // src/components/shared/DataTable.tsx
 
 import { cn } from "@/lib/utils";
-import { ChevronUp, ChevronDown, ChevronsUpDown, ChevronLeft, ChevronRight, AlertCircle } from "lucide-react";
-
+import { ChevronLeft, ChevronRight, AlertCircle } from "lucide-react";
+import { ArrowUp, ArrowDown, ArrowUpDown } from "lucide-react";
+import type { SortConfig } from "@/lib/sort";
 export interface ColumnDef<T> {
   key: string;
   header: string;
@@ -11,10 +12,10 @@ export interface ColumnDef<T> {
   render: (row: T) => React.ReactNode;
 }
 
-export interface SortConfig {
-  key: string;
-  direction: "asc" | "desc";
-}
+// export interface SortConfig {
+//   key: string;
+//   direction: "asc" | "desc";
+// }
 
 export interface PaginationConfig {
   page: number;
@@ -37,6 +38,7 @@ interface DataTableProps<T> {
   sortConfig?: SortConfig;
   onSort?: (key: string) => void;
   keyExtractor?: (row: T) => string;
+  rowClassName?: (row: T) => string;
 }
 
 function SkeletonRow({ cols }: { cols: number }) {
@@ -65,21 +67,22 @@ export function DataTable<T>({
   sortConfig,
   onSort,
   keyExtractor,
+  // rowClassName,
 }: DataTableProps<T>) {
   const hasSearch = onSearchChange !== undefined;
   const hasPagination = pagination !== undefined;
   const isClickable = onRowClick !== undefined;
 
-  function SortIcon({ colKey }: { colKey: string }) {
-    if (!sortConfig || sortConfig.key !== colKey) {
-      return <ChevronsUpDown className="ml-1 inline h-3 w-3 text-[#9ca3af]" />;
-    }
-    return sortConfig.direction === "asc" ? (
-      <ChevronUp className="ml-1 inline h-3 w-3 text-[#2563eb]" />
-    ) : (
-      <ChevronDown className="ml-1 inline h-3 w-3 text-[#2563eb]" />
-    );
-  }
+  // function SortIcon({ colKey }: { colKey: string }) {
+  //   if (!sortConfig || sortConfig.key !== colKey) {
+  //     return <ChevronsUpDown className="ml-1 inline h-3 w-3 text-[#9ca3af]" />;
+  //   }
+  //   return sortConfig.direction === "asc" ? (
+  //     <ChevronUp className="ml-1 inline h-3 w-3 text-[#2563eb]" />
+  //   ) : (
+  //     <ChevronDown className="ml-1 inline h-3 w-3 text-[#2563eb]" />
+  //   );
+  // }
 
   return (
     <div className="flex flex-col gap-0">
@@ -123,17 +126,27 @@ export function DataTable<T>({
                   {columns.map((col) => (
                     <th
                       key={col.key}
-                      style={col.width ? { width: col.width } : undefined}
+                      onClick={col.sortable && onSort ? () => onSort(col.key) : undefined}
+                      aria-sort={
+                        sortConfig?.key === col.key
+                          ? sortConfig.direction === "asc" ? "ascending" : "descending"
+                          : undefined
+                      }
                       className={cn(
-                        "px-4 py-2.5 text-left text-xs font-semibold uppercase tracking-wide text-[#6b7280]",
-                        col.sortable && onSort ? "cursor-pointer select-none hover:text-[#374151]" : ""
+                        "px-3 py-2 text-left text-xs font-semibold uppercase text-[#6b7280]",
+                        col.sortable && onSort && "cursor-pointer select-none hover:text-[#111827]"
                       )}
-                      onClick={() => {
-                        if (col.sortable && onSort) onSort(col.key);
-                      }}
                     >
-                      {col.header}
-                      {col.sortable && onSort && <SortIcon colKey={col.key} />}
+                      <span className="inline-flex items-center gap-1">
+                        {col.header}
+                        {col.sortable && onSort && (
+                          sortConfig?.key === col.key
+                            ? sortConfig.direction === "asc"
+                              ? <ArrowUp className="h-3 w-3 text-[#2563eb]" />
+                              : <ArrowDown className="h-3 w-3 text-[#2563eb]" />
+                            : <ArrowUpDown className="h-3 w-3 opacity-40" />
+                        )}
+                      </span>
                     </th>
                   ))}
                 </tr>

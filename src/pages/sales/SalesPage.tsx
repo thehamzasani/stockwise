@@ -1,18 +1,20 @@
 // src/pages/sales/SalesPage.tsx
 import { useState } from "react";
-import { Plus, Printer, XCircle } from "lucide-react";
+import { Plus, Printer, XCircle, Undo2 } from "lucide-react";
 import { printInvoiceById } from "@/hooks/usePDF";
 import { useSales, cancelSale } from "@/hooks/useSales";
 import { useNavigate } from "@/lib/navigation";
 import { useAppStore } from "@/stores/appStore";
 import { DataTable } from "@/components/shared/DataTable";
 import StatusBadge from "@/components/shared/StatusBadge";
+import DateRangeFilter, { EMPTY_RANGE, type DateRange } from "@/components/shared/DateRangeFilter";
+import { ReturnForm } from "@/components/shared/ReturnForm";
+import { nextSort, type SortConfig } from "@/lib/sort";
 import { formatCurrency, formatDate, isOverdue, daysOverdue } from "@/lib/utils";
 import { ITEMS_PER_PAGE } from "@/lib/constants";
 import { toast } from "sonner";
 import type { Sale } from "@/types";
-import { Undo2 } from "lucide-react";
-import { ReturnForm } from "@/components/shared/ReturnForm";
+
 type SaleTab = "all" | "unpaid" | "partial" | "paid" | "overdue";
 
 const TABS: { key: SaleTab; label: string }[] = [
@@ -31,8 +33,8 @@ export function SalesPage() {
   const [tab, setTab] = useState<SaleTab>("all");
   const [page, setPage] = useState(1);
   const [search, setSearch] = useState("");
-  const [dateFrom, setDateFrom] = useState("");
-  const [dateTo, setDateTo] = useState("");
+  const [range, setRange] = useState<DateRange>(EMPTY_RANGE);
+  const [sort, setSort] = useState<SortConfig | null>(null);
 
   const [cancelTarget, setCancelTarget] = useState<Sale | null>(null);
   const [cancelReason, setCancelReason] = useState("");
@@ -46,8 +48,9 @@ export function SalesPage() {
     page,
     search,
     status: tab,
-    dateFrom: dateFrom || undefined,
-    dateTo: dateTo || undefined,
+    dateFrom: range.from || undefined,
+    dateTo: range.to || undefined,
+    sort,
   });
 
   const totalPages = Math.max(1, Math.ceil(totalCount / ITEMS_PER_PAGE));
@@ -62,6 +65,16 @@ export function SalesPage() {
     setPage(1);
   }
 
+  function handleRangeChange(r: DateRange) {
+    setRange(r);
+    setPage(1);
+  }
+
+  function handleSort(key: string) {
+    setSort((cur) => nextSort(cur, key));
+    setPage(1);
+  }
+
   async function handleConfirmCancel() {
     if (!cancelTarget || !cancelReason.trim()) {
       toast.error("Please enter a cancellation reason.");
@@ -70,7 +83,7 @@ export function SalesPage() {
     setCancelling(true);
     try {
       await cancelSale(cancelTarget.id, cancelReason.trim());
-      toast.success(`Sale ${cancelTarget.invoiceNo} cancelled.`);
+      toast.success(`Sale ${cancelTarget.invoiceNo} cancelled — stock restored.`);
       setCancelTarget(null);
       setCancelReason("");
       refetch();
@@ -85,6 +98,7 @@ export function SalesPage() {
     {
       key: "invoiceNo",
       header: "Invoice",
+      sortable: true,
       render: (row: Sale) => (
         <span className="font-medium text-[#2563eb]">{row.invoiceNo}</span>
       ),
@@ -92,6 +106,7 @@ export function SalesPage() {
     {
       key: "saleDate",
       header: "Date",
+      sortable: true,
       render: (row: Sale) => (
         <span className="text-sm text-[#374151]">{formatDate(row.saleDate)}</span>
       ),
@@ -99,6 +114,7 @@ export function SalesPage() {
     {
       key: "dueDate",
       header: "Due",
+      sortable: true,
       render: (row: Sale) => {
         const overdue = isOverdue(row.dueDate, row.paymentStatus, row.isCancelled);
         return (
@@ -116,6 +132,7 @@ export function SalesPage() {
     {
       key: "totalAmount",
       header: "Total",
+      sortable: true,
       render: (row: Sale) => (
         <span className="text-sm font-semibold text-[#111827]">
           {formatCurrency(row.totalAmount, currency)}
@@ -125,6 +142,7 @@ export function SalesPage() {
     {
       key: "paidAmount",
       header: "Paid",
+      sortable: true,
       render: (row: Sale) => (
         <span className="text-sm text-[#16a34a]">
           {formatCurrency(row.paidAmount, currency)}
@@ -134,6 +152,7 @@ export function SalesPage() {
     {
       key: "paymentStatus",
       header: "Status",
+      sortable: true,
       render: (row: Sale) =>
         row.isCancelled ? (
           <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-[#f3f4f6] text-[#6b7280]">
@@ -157,7 +176,8 @@ export function SalesPage() {
             title="View / Print invoice"
           >
             <Printer size={14} />
-          </button>{!row.isCancelled && (
+          </button>
+          {!row.isCancelled && (
             <button
               onClick={() =>
                 setReturnTarget({
@@ -220,37 +240,8 @@ export function SalesPage() {
         ))}
       </div>
 
-      {/* Date filters — inline until DateRangeFilter is built in Task 18 */}
-      <div className="flex items-center gap-3">
-        <div className="flex items-center gap-2">
-          <label className="text-xs text-[#6b7280]">From</label>
-          <input
-            type="date"
-            value={dateFrom}
-            onChange={(e) => { setDateFrom(e.target.value); setPage(1); }}
-            className="h-8 rounded-[7px] border border-[#e4e7ec] px-2 text-sm
-                       focus:outline-none focus:ring-2 focus:ring-[#2563eb] focus:border-transparent"
-          />
-        </div>
-        <div className="flex items-center gap-2">
-          <label className="text-xs text-[#6b7280]">To</label>
-          <input
-            type="date"
-            value={dateTo}
-            onChange={(e) => { setDateTo(e.target.value); setPage(1); }}
-            className="h-8 rounded-[7px] border border-[#e4e7ec] px-2 text-sm
-                       focus:outline-none focus:ring-2 focus:ring-[#2563eb] focus:border-transparent"
-          />
-        </div>
-        {(dateFrom || dateTo) && (
-          <button
-            onClick={() => { setDateFrom(""); setDateTo(""); setPage(1); }}
-            className="text-xs text-[#6b7280] hover:text-[#dc2626]"
-          >
-            Clear
-          </button>
-        )}
-      </div>
+      {/* Date range filter */}
+      <DateRangeFilter value={range} onChange={handleRangeChange} />
 
       {/* Error */}
       {error && (
@@ -273,6 +264,8 @@ export function SalesPage() {
           totalCount,
           onPageChange: setPage,
         }}
+        sortConfig={sort ?? undefined}
+        onSort={handleSort}
         onRowClick={(row) => void printInvoiceById(row.id)}
         rowClassName={(row: Sale) =>
           isOverdue(row.dueDate, row.paymentStatus, row.isCancelled)
@@ -320,6 +313,7 @@ export function SalesPage() {
           </div>
         </div>
       )}
+
       {returnTarget && (
         <ReturnForm
           mode="sale"

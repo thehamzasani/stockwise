@@ -3,7 +3,7 @@ import { useEffect, useState, useCallback } from "react";
 import Sidebar from "./Sidebar";
 import Topbar from "./Topbar";
 import { getSqlite } from "@/db";
-
+import QuickActions from "@/components/shared/QuickActions";
 interface BadgeCounts {
   overdueInvoices: number;
   lowStockProducts: number;
@@ -68,6 +68,7 @@ export default function AppLayout({ title, subtitle, children }: AppLayoutProps)
           className="flex-1 overflow-y-auto"
         >
           {children}
+          <QuickActions />
         </main>
       </div>
     </div>
