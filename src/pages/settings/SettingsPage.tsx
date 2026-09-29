@@ -13,7 +13,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import  ConfirmDialog  from "@/components/shared/ConfirmDialog";
 import { useSettings } from "@/hooks/useSettings";
 import { calcInvoiceNo } from "@/lib/utils";
-
+import { DataIntegritySection } from "@/components/settings/DataIntegritySection";
 // ─── VALIDATION ──────────────────────────────────────────────────────────────
 const settingsSchema = z.object({
   businessName: z.string().trim().min(1, "Business name is required").max(100),
@@ -392,7 +392,7 @@ export function SettingsPage() {
           </div>
         </SectionCard>
 
-        {/* Data Integrity — stub, wired in Task 17 */}
+        <DataIntegritySection />
         <SectionCard
           title="Data Integrity"
           description="Verify that cached balances and stock levels match transaction history."
