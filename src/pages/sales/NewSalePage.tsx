@@ -4,7 +4,7 @@ import { ArrowLeft } from "lucide-react";
 import { SaleForm } from "@/components/sales/SaleForm";
 import { useSaleStore } from "@/stores/saleStore";
 import { useNavigate, useCurrentPage } from "@/lib/navigation";
-
+import { printInvoiceById } from "@/hooks/usePDF";
 export function NewSalePage() {
   const navigate = useNavigate();
   const { params } = useCurrentPage();
@@ -19,8 +19,8 @@ export function NewSalePage() {
   }
 
   function handlePrintReady(saleId: string) {
-    console.log("PDF ready in Task 12:", saleId);
-  }
+  void printInvoiceById(saleId);
+}
 
   return (
     <div className="p-5 flex flex-col gap-4 h-full">

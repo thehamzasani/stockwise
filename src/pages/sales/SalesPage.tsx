@@ -1,6 +1,7 @@
 // src/pages/sales/SalesPage.tsx
 import { useState } from "react";
-import { Plus, Eye, XCircle } from "lucide-react";
+import { Plus, Printer, XCircle } from "lucide-react";
+import { printInvoiceById } from "@/hooks/usePDF";
 import { useSales, cancelSale } from "@/hooks/useSales";
 import { useNavigate } from "@/lib/navigation";
 import { useAppStore } from "@/stores/appStore";
@@ -146,12 +147,12 @@ export function SalesPage() {
           onClick={(e) => e.stopPropagation()}
         >
           <button
-            onClick={() => navigate("sales", { id: row.id })}
-            className="p-1.5 rounded-[7px] text-[#6b7280] hover:text-[#2563eb] hover:bg-[#eff6ff] transition-colors"
-            title="View"
-          >
-            <Eye size={14} />
-          </button>
+  onClick={() => void printInvoiceById(row.id)}
+  className="p-1.5 rounded-[7px] text-[#6b7280] hover:text-[#2563eb] hover:bg-[#eff6ff] transition-colors"
+  title="View / Print invoice"
+>
+  <Printer size={14} />
+</button>
           {!row.isCancelled && row.paymentStatus === "unpaid" && (
             <button
               onClick={() => { setCancelTarget(row); setCancelReason(""); }}
@@ -254,7 +255,7 @@ export function SalesPage() {
           totalCount,
           onPageChange: setPage,
         }}
-        onRowClick={(row) => navigate("sales", { id: row.id })}
+        onRowClick={(row) => void printInvoiceById(row.id)}
         rowClassName={(row: Sale) =>
           isOverdue(row.dueDate, row.paymentStatus, row.isCancelled)
             ? "bg-[#fff7ed]"

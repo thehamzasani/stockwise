@@ -6,9 +6,11 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { useNavigate, useCurrentPage } from "@/lib/navigation";
 import { useCustomer, useCustomerLedger } from "@/hooks/useCustomers";
 import { CustomerLedger } from "@/components/customers/CustomerLedger";
-import { formatCurrency, formatDate, isOverdue } from "@/lib/utils";
+import { formatCurrency, formatDate, isOverdue, todayDate } from "@/lib/utils";
 import { getSqlite } from "@/db";
-import {  useEffect } from "react";
+import { useEffect } from "react";
+import { generateStatementPDF } from "@/hooks/usePDF";
+import { useAppStore } from "@/stores/appStore";
 
 // Mini hook: recent sales for this customer
 function useCustomerSales(customerId: string) {
@@ -45,7 +47,7 @@ function useCustomerSales(customerId: string) {
 }
 
 export default function CustomerDetailPage() {
-  const navigate   = useNavigate();
+  const navigate = useNavigate();
   const { params } = useCurrentPage();
   const customerId = params.id ?? "";
 
@@ -55,6 +57,16 @@ export default function CustomerDetailPage() {
     = useCustomerLedger(customerId);
   const { data: sales, isLoading: salesLoading }
     = useCustomerSales(customerId);
+  const settings = useAppStore((s) => s.settings);
+
+  async function handlePrintStatement() {
+    if (!customer || !settings) return;
+    const firstDate = entries.length > 0 ? entries[0].date.slice(0, 10) : todayDate();
+    await generateStatementPDF(customer, entries, settings, {
+      from: firstDate,
+      to: todayDate(),
+    });
+  }
 
   if (customerLoading) {
     return (
@@ -97,7 +109,7 @@ export default function CustomerDetailPage() {
 
   function creditLimitLabel() {
     if (customer!.creditLimit === null) return "Unlimited";
-    if (customer!.creditLimit === 0)    return "Cash Only";
+    if (customer!.creditLimit === 0) return "Cash Only";
     return formatCurrency(customer!.creditLimit);
   }
 
@@ -117,9 +129,9 @@ export default function CustomerDetailPage() {
       );
     }
     const map: Record<string, string> = {
-      paid:    "bg-[#dcfce7] text-[#16a34a]",
+      paid: "bg-[#dcfce7] text-[#16a34a]",
       partial: "bg-[#fef3c7] text-[#d97706]",
-      unpaid:  "bg-[#fee2e2] text-[#dc2626]",
+      unpaid: "bg-[#fee2e2] text-[#dc2626]",
     };
     return (
       <span
@@ -154,11 +166,10 @@ export default function CustomerDetailPage() {
               <div className="flex items-center gap-2">
                 <h1 className="text-lg font-semibold text-[#111827]">{customer.shopName}</h1>
                 <span
-                  className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-medium ${
-                    customer.isActive
-                      ? "bg-[#dcfce7] text-[#16a34a]"
-                      : "bg-[#f3f4f6] text-[#6b7280]"
-                  }`}
+                  className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-medium ${customer.isActive
+                    ? "bg-[#dcfce7] text-[#16a34a]"
+                    : "bg-[#f3f4f6] text-[#6b7280]"
+                    }`}
                 >
                   {customer.isActive ? "Active" : "Inactive"}
                 </span>
@@ -202,11 +213,10 @@ export default function CustomerDetailPage() {
           <div>
             <p className="text-xs text-[#6b7280]">Outstanding Balance</p>
             <p
-              className={`text-xl font-semibold ${
-                customer.outstandingBalance > 0
-                  ? "text-[#dc2626]"
-                  : "text-[#16a34a]"
-              }`}
+              className={`text-xl font-semibold ${customer.outstandingBalance > 0
+                ? "text-[#dc2626]"
+                : "text-[#16a34a]"
+                }`}
             >
               {formatCurrency(customer.outstandingBalance)}
             </p>
@@ -224,9 +234,8 @@ export default function CustomerDetailPage() {
           <div>
             <p className="text-xs text-[#6b7280]">Overdue Invoices</p>
             <p
-              className={`text-xl font-semibold ${
-                overdueSales.length > 0 ? "text-[#dc2626]" : "text-[#16a34a]"
-              }`}
+              className={`text-xl font-semibold ${overdueSales.length > 0 ? "text-[#dc2626]" : "text-[#16a34a]"
+                }`}
             >
               {overdueSales.length}
             </p>
@@ -266,10 +275,8 @@ export default function CustomerDetailPage() {
                 variant="outline"
                 size="sm"
                 className="h-8 px-3 text-xs rounded-[7px]"
-                onClick={() => {
-                  // PDF wired in Task 12
-                  console.log("Print statement — wired in Task 12");
-                }}
+                disabled={ledgerLoading || !settings}
+                onClick={() => void handlePrintStatement()}
               >
                 <Printer className="h-3.5 w-3.5 mr-1" />
                 Print Statement
@@ -310,11 +317,10 @@ export default function CustomerDetailPage() {
                   {sales.map((s) => (
                     <tr
                       key={s.id}
-                      className={`border-b border-[#e4e7ec] hover:bg-[#f9fafb] ${
-                        !s.is_cancelled && isOverdue(s.due_date, s.payment_status)
-                          ? "bg-[#fff7ed]"
-                          : ""
-                      }`}
+                      className={`border-b border-[#e4e7ec] hover:bg-[#f9fafb] ${!s.is_cancelled && isOverdue(s.due_date, s.payment_status)
+                        ? "bg-[#fff7ed]"
+                        : ""
+                        }`}
                     >
                       <td className="px-4 py-2.5 font-medium text-[#2563eb]">
                         {s.invoice_no}
