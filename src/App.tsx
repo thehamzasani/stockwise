@@ -23,7 +23,7 @@ import CustomerDetailPage from "@/pages/customers/CustomerDetailPage";
 import SuppliersPage from "@/pages/suppliers/SuppliersPage";
 import AddSupplierPage from "@/pages/suppliers/AddSupplierPage";
 import PaymentsPage from "@/pages/payments/PaymentsPage";
-import ExpensesPage from "@/pages/expenses/ExpensesPage";
+import {ExpensesPage} from "@/pages/expenses/ExpensesPage";
 import ReportsPage from "@/pages/reports/ReportsPage";
 import SettingsPage from "@/pages/settings/SettingsPage";
 import OpeningBalancesPage from "@/pages/OpeningBalancesPage";
