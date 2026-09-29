@@ -6,12 +6,13 @@ import { useSales, cancelSale } from "@/hooks/useSales";
 import { useNavigate } from "@/lib/navigation";
 import { useAppStore } from "@/stores/appStore";
 import { DataTable } from "@/components/shared/DataTable";
-import  StatusBadge  from "@/components/shared/StatusBadge";
+import StatusBadge from "@/components/shared/StatusBadge";
 import { formatCurrency, formatDate, isOverdue, daysOverdue } from "@/lib/utils";
 import { ITEMS_PER_PAGE } from "@/lib/constants";
 import { toast } from "sonner";
 import type { Sale } from "@/types";
-
+import { Undo2 } from "lucide-react";
+import { ReturnForm } from "@/components/shared/ReturnForm";
 type SaleTab = "all" | "unpaid" | "partial" | "paid" | "overdue";
 
 const TABS: { key: SaleTab; label: string }[] = [
@@ -36,6 +37,10 @@ export function SalesPage() {
   const [cancelTarget, setCancelTarget] = useState<Sale | null>(null);
   const [cancelReason, setCancelReason] = useState("");
   const [cancelling, setCancelling] = useState(false);
+
+  const [returnTarget, setReturnTarget] = useState<{
+    id: string; invoiceNo: string; customerId: string;
+  } | null>(null);
 
   const { data, totalCount, isLoading, error, refetch } = useSales({
     page,
@@ -147,12 +152,26 @@ export function SalesPage() {
           onClick={(e) => e.stopPropagation()}
         >
           <button
-  onClick={() => void printInvoiceById(row.id)}
-  className="p-1.5 rounded-[7px] text-[#6b7280] hover:text-[#2563eb] hover:bg-[#eff6ff] transition-colors"
-  title="View / Print invoice"
->
-  <Printer size={14} />
-</button>
+            onClick={() => void printInvoiceById(row.id)}
+            className="p-1.5 rounded-[7px] text-[#6b7280] hover:text-[#2563eb] hover:bg-[#eff6ff] transition-colors"
+            title="View / Print invoice"
+          >
+            <Printer size={14} />
+          </button>{!row.isCancelled && (
+            <button
+              onClick={() =>
+                setReturnTarget({
+                  id: row.id,
+                  invoiceNo: row.invoiceNo,
+                  customerId: row.customerId,
+                })
+              }
+              className="p-1.5 rounded-[7px] text-[#6b7280] hover:text-[#2563eb] hover:bg-[#eff6ff] transition-colors"
+              title="Return items"
+            >
+              <Undo2 size={14} />
+            </button>
+          )}
           {!row.isCancelled && row.paymentStatus === "unpaid" && (
             <button
               onClick={() => { setCancelTarget(row); setCancelReason(""); }}
@@ -191,11 +210,10 @@ export function SalesPage() {
           <button
             key={t.key}
             onClick={() => handleTabChange(t.key)}
-            className={`px-4 py-2 text-sm font-medium border-b-2 transition-colors -mb-px ${
-              tab === t.key
-                ? "border-[#2563eb] text-[#2563eb]"
-                : "border-transparent text-[#6b7280] hover:text-[#374151]"
-            }`}
+            className={`px-4 py-2 text-sm font-medium border-b-2 transition-colors -mb-px ${tab === t.key
+              ? "border-[#2563eb] text-[#2563eb]"
+              : "border-transparent text-[#6b7280] hover:text-[#374151]"
+              }`}
           >
             {t.label}
           </button>
@@ -301,6 +319,17 @@ export function SalesPage() {
             </div>
           </div>
         </div>
+      )}
+      {returnTarget && (
+        <ReturnForm
+          mode="sale"
+          open
+          onOpenChange={(o) => { if (!o) setReturnTarget(null); }}
+          saleId={returnTarget.id}
+          invoiceNo={returnTarget.invoiceNo}
+          customerId={returnTarget.customerId}
+          onSuccess={refetch}
+        />
       )}
     </div>
   );

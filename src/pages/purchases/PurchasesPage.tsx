@@ -1,14 +1,14 @@
 // src/pages/purchases/PurchasesPage.tsx
 // import { useState, useCallback } from "react";
 import { useState } from "react";
-import { Plus, Eye, XCircle, DollarSign, ChevronLeft, ChevronRight } from "lucide-react";
+import { Plus, Eye, XCircle, DollarSign, ChevronLeft, ChevronRight, Undo2 } from "lucide-react";
 import { usePurchases, cancelPurchase, recordPurchasePayment } from "@/hooks/usePurchases";
 import { useNavigate } from "@/lib/navigation";
 import { formatCurrency, formatDate, formatRelativeTime } from "@/lib/utils";
 import { ITEMS_PER_PAGE } from "@/lib/constants";
 import type { PurchaseWithItems } from "@/types";
 import { toast } from "sonner";
-
+import { ReturnForm } from "@/components/shared/ReturnForm";
 type TabFilter = "all" | "unpaid" | "partial" | "paid";
 
 export default function PurchasesPage() {
@@ -24,7 +24,9 @@ export default function PurchasesPage() {
   const [payAmount, setPayAmount] = useState("");
   const [payMethod, setPayMethod] = useState("cash");
   const [payLoading, setPayLoading] = useState(false);
-
+  const [returnTarget, setReturnTarget] = useState<{
+    id: string; invoiceNo: string | null;
+  } | null>(null);
   const { data, totalCount, isLoading, error, refetch } = usePurchases({
     page,
     search,
@@ -112,11 +114,10 @@ export default function PurchasesPage() {
               <button
                 key={t.key}
                 onClick={() => handleTabChange(t.key)}
-                className={`px-3 py-1.5 text-sm font-medium rounded-t transition-colors ${
-                  tab === t.key
-                    ? "text-[#2563eb] border-b-2 border-[#2563eb]"
-                    : "text-[#6b7280] hover:text-[#374151]"
-                }`}
+                className={`px-3 py-1.5 text-sm font-medium rounded-t transition-colors ${tab === t.key
+                  ? "text-[#2563eb] border-b-2 border-[#2563eb]"
+                  : "text-[#6b7280] hover:text-[#374151]"
+                  }`}
               >
                 {t.label}
               </button>
@@ -175,9 +176,8 @@ export default function PurchasesPage() {
                   return (
                     <tr
                       key={purchase.id}
-                      className={`border-t border-[#f3f4f6] hover:bg-[#f9fafb] ${
-                        purchase.isCancelled ? "opacity-50" : ""
-                      }`}
+                      className={`border-t border-[#f3f4f6] hover:bg-[#f9fafb] ${purchase.isCancelled ? "opacity-50" : ""
+                        }`}
                     >
                       <td className="px-4 py-3 text-sm text-[#374151]">
                         <div>{formatDate(purchase.purchaseDate)}</div>
@@ -210,9 +210,8 @@ export default function PurchasesPage() {
                           </span>
                         ) : (
                           <span
-                            className={`text-xs font-medium px-2 py-0.5 rounded-full ${
-                              statusColors[purchase.paymentStatus] ?? ""
-                            }`}
+                            className={`text-xs font-medium px-2 py-0.5 rounded-full ${statusColors[purchase.paymentStatus] ?? ""
+                              }`}
                           >
                             {purchase.paymentStatus.charAt(0).toUpperCase() + purchase.paymentStatus.slice(1)}
                           </span>
@@ -229,6 +228,17 @@ export default function PurchasesPage() {
                           >
                             <Eye size={14} />
                           </button>
+                          {!purchase.isCancelled && (
+                            <button
+                              title="Return to supplier"
+                              onClick={() =>
+                                setReturnTarget({ id: purchase.id, invoiceNo: purchase.invoiceNo })
+                              }
+                              className="p-1.5 rounded hover:bg-[#eff6ff] text-[#6b7280] hover:text-[#2563eb] transition-colors"
+                            >
+                              <Undo2 size={14} />
+                            </button>
+                          )}
                           {!purchase.isCancelled && purchase.paymentStatus !== "paid" && purchase.supplierId && (
                             <button
                               title="Record Payment"
@@ -365,11 +375,10 @@ export default function PurchasesPage() {
                     key={m}
                     type="button"
                     onClick={() => setPayMethod(m)}
-                    className={`h-8 rounded-[7px] text-xs font-medium border transition-colors ${
-                      payMethod === m
-                        ? "bg-[#2563eb] text-white border-[#2563eb]"
-                        : "border-[#e4e7ec] text-[#374151] hover:border-[#2563eb]"
-                    }`}
+                    className={`h-8 rounded-[7px] text-xs font-medium border transition-colors ${payMethod === m
+                      ? "bg-[#2563eb] text-white border-[#2563eb]"
+                      : "border-[#e4e7ec] text-[#374151] hover:border-[#2563eb]"
+                      }`}
                   >
                     {m.charAt(0).toUpperCase() + m.slice(1)}
                   </button>
@@ -396,6 +405,16 @@ export default function PurchasesPage() {
             </div>
           </div>
         </div>
+      )}
+      {returnTarget && (
+        <ReturnForm
+          mode="purchase"
+          open
+          onOpenChange={(o) => { if (!o) setReturnTarget(null); }}
+          purchaseId={returnTarget.id}
+          invoiceNo={returnTarget.invoiceNo}
+          onSuccess={refetch}
+        />
       )}
     </div>
   );
