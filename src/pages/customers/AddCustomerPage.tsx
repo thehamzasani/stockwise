@@ -18,6 +18,7 @@ import {
 import ConfirmDialog from "@/components/shared/ConfirmDialog";
 import { formatCurrency, formatDate } from "@/lib/utils";
 
+
 export default function AddCustomerPage() {
   const navigate       = useNavigate();
   const { params }     = useCurrentPage();
