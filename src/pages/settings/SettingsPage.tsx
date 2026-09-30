@@ -14,6 +14,7 @@ import  ConfirmDialog  from "@/components/shared/ConfirmDialog";
 import { useSettings } from "@/hooks/useSettings";
 import { calcInvoiceNo } from "@/lib/utils";
 import { DataIntegritySection } from "@/components/settings/DataIntegritySection";
+import { DataManagementSection } from "@/components/settings/DataManagementSection";
 // ─── VALIDATION ──────────────────────────────────────────────────────────────
 const settingsSchema = z.object({
   businessName: z.string().trim().min(1, "Business name is required").max(100),
@@ -408,7 +409,7 @@ export function SettingsPage() {
           </div>
         </SectionCard>
 
-        {/* Data Management — stub, wired in Task 19 */}
+        <DataManagementSection />
         <SectionCard
           title="Data Management"
           description="Back up and restore your database."

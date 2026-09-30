@@ -4,10 +4,12 @@
   "windows": ["main"],
   "permissions": [
     "core:default",
-    "sql:default",
-    "sql:allow-execute",
-    "dialog:default",
-    "fs:default",
-    "opener:default"
+    "sql:allow-execute", "sql:allow-select", "sql:allow-load", "sql:allow-close",
+    "dialog:allow-save", "dialog:allow-open",
+    "fs:allow-write-file", "fs:allow-read-file",
+    { "identifier": "fs:allow-copy-file", "allow": [{ "path": "$APPCONFIG" }, { "path": "$APPCONFIG/**" }] },
+    { "identifier": "fs:allow-remove", "allow": [{ "path": "$APPCONFIG/**" }] },
+    { "identifier": "fs:allow-exists", "allow": [{ "path": "$APPCONFIG/**" }] },
+    "shell:allow-open"
   ]
 }
