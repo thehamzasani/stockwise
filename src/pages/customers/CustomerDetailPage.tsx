@@ -1,6 +1,6 @@
 // src/pages/customers/CustomerDetailPage.tsx
-import { useState } from "react";
-import { ArrowLeft, Edit, Plus, Printer } from "lucide-react";
+import { useMemo, useState } from "react";
+import { ArrowLeft, Edit, Plus, Printer, Wallet } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { useNavigate, useCurrentPage } from "@/lib/navigation";
@@ -11,7 +11,7 @@ import { getSqlite } from "@/db";
 import { useEffect } from "react";
 import { generateStatementPDF } from "@/hooks/usePDF";
 import { useAppStore } from "@/stores/appStore";
-
+import { PaymentForm } from "@/components/payments/PaymentForm";
 // Mini hook: recent sales for this customer
 function useCustomerSales(customerId: string) {
   const [data, setData] = useState<{
@@ -55,9 +55,16 @@ export default function CustomerDetailPage() {
     = useCustomer(customerId);
   const { entries, cancelledSales, isLoading: ledgerLoading }
     = useCustomerLedger(customerId);
-  const { data: sales, isLoading: salesLoading }
+    const { data: sales, isLoading: salesLoading, refetch: refetchSales }
     = useCustomerSales(customerId);
   const settings = useAppStore((s) => s.settings);
+
+  const [paymentOpen, setPaymentOpen] = useState(false);
+  // Memoized: PaymentForm resets itself whenever `defaults` changes identity
+  const paymentDefaults = useMemo(
+    () => ({ partyType: "customer" as const, partyId: customerId }),
+    [customerId]
+  );
 
   async function handlePrintStatement() {
     if (!customer || !settings) return;
@@ -67,7 +74,7 @@ export default function CustomerDetailPage() {
       to: todayDate(),
     });
   }
-
+ 
   if (customerLoading) {
     return (
       <div className="p-5 max-w-4xl">
@@ -195,6 +202,15 @@ export default function CustomerDetailPage() {
             >
               <Plus className="h-3.5 w-3.5 mr-1" />
               New Sale
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              className="h-8 px-3 text-xs border-[#2563eb] text-[#2563eb] hover:bg-[#eff6ff] rounded-[7px]"
+              onClick={() => setPaymentOpen(true)}
+            >
+              <Wallet className="h-3.5 w-3.5 mr-1" />
+              Record Payment
             </Button>
             <Button
               variant="outline"
@@ -410,6 +426,15 @@ export default function CustomerDetailPage() {
           </div>
         </TabsContent>
       </Tabs>
+      <PaymentForm
+        open={paymentOpen}
+        onOpenChange={setPaymentOpen}
+        defaults={paymentDefaults}
+        onSaved={() => {
+          refetchCustomer();
+          refetchSales();
+        }}
+      />
     </div>
   );
 }

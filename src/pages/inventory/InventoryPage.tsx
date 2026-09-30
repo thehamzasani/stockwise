@@ -93,14 +93,7 @@ export default function InventoryPage() {
           >
             Adjust
           </Button>
-          <Button
-            variant="ghost"
-            size="sm"
-            className="h-7 px-2 text-xs text-[#374151] hover:bg-[#f0f2f5]"
-            onClick={() => navigate("inventory/edit", { id: p.id })}
-          >
-            Edit
-          </Button>
+          <Button onClick={(e) => { e.stopPropagation(); navigate("inventory/edit", { id: p.id }); }}>Edit</Button>
         </div>
       ),
     },

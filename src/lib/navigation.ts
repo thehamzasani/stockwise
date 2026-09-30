@@ -1,6 +1,20 @@
 // src/lib/navigation.ts
 import { createContext, useContext } from "react";
 
+export const PARENT_PAGE: Partial<Record<AppPage, AppPage>> = {
+  "inventory/add":    "inventory",
+  "inventory/edit":   "inventory",
+  "purchases/new":    "purchases",
+  "sales/new":        "sales",
+  "customers/add":    "customers",
+  "customers/detail": "customers",
+  "suppliers/add":    "suppliers",
+};
+export function useBack() {
+  const { currentPage } = useCurrentPage();
+  const navigate = useNavigate();
+  return () => navigate(PARENT_PAGE[currentPage] ?? "dashboard");
+}
 export type AppPage =
   | "dashboard"
   | "inventory"

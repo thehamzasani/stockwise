@@ -31,7 +31,7 @@ export function CustomerLedger({
     );
   }
 
-  if (entries.length === 0) {
+  if (entries.length === 0 && cancelledSales.length === 0) {
     return (
       <div className="p-10 text-center text-sm text-[#6b7280]">
         No transactions recorded yet for this customer.

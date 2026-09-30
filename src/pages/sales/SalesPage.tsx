@@ -3,7 +3,7 @@ import { useState } from "react";
 import { Plus, Printer, XCircle, Undo2 } from "lucide-react";
 import { printInvoiceById } from "@/hooks/usePDF";
 import { useSales, cancelSale } from "@/hooks/useSales";
-import { useNavigate } from "@/lib/navigation";
+import { useNavigate, useCurrentPage } from "@/lib/navigation";
 import { useAppStore } from "@/stores/appStore";
 import { DataTable } from "@/components/shared/DataTable";
 import StatusBadge from "@/components/shared/StatusBadge";
@@ -30,7 +30,11 @@ export function SalesPage() {
   const { settings } = useAppStore();
   const currency = settings?.currency ?? "Rs.";
 
-  const [tab, setTab] = useState<SaleTab>("all");
+  const { params } = useCurrentPage();
+  const initialTab: SaleTab = TABS.some((t) => t.key === params.tab)
+    ? (params.tab as SaleTab)
+    : "all";
+  const [tab, setTab] = useState<SaleTab>(initialTab);
   const [page, setPage] = useState(1);
   const [search, setSearch] = useState("");
   const [range, setRange] = useState<DateRange>(EMPTY_RANGE);

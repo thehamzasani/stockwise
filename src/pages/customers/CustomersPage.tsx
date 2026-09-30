@@ -119,14 +119,7 @@ export default function CustomersPage() {
           className="flex items-center gap-2 justify-end"
           onClick={(e) => e.stopPropagation()}
         >
-          <Button
-            variant="ghost"
-            size="sm"
-            className="h-7 px-2 text-xs text-[#2563eb] hover:bg-[#eff6ff]"
-            onClick={() => navigate("sales/new", { customerId: c.id })}
-          >
-            New Sale
-          </Button>
+          <Button onClick={(e) => { e.stopPropagation(); navigate("customers/detail", { id: c.id }); }}>View</Button>
           <Button
             variant="ghost"
             size="sm"
